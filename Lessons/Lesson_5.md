@@ -639,12 +639,12 @@ SELECT 20 >> 2; -- 20/4 = 5
 
 ### 6. Best Practices & Precautions
 
-✔ **Use only on integers** → Avoid applying on floating types.
-✔ **Be careful with NOT (`~`)** → Different databases may handle signed integers differently (2’s complement representation).
-✔ **Document bitmask meanings** → Store mapping of flags (1=Read, 2=Write, etc.) in metadata tables.
-✔ **Prefer readability over compactness** → Bitwise logic can confuse teammates; comment your queries.
-✔ **Indexing caution** → Bitwise operations in `WHERE` clauses may **prevent index usage** (can slow down queries).
-✔ **Cross-database portability** → Not all RDBMS support full set (Oracle uses `BITAND()` instead of `&`).
+- **Use only on integers** → Avoid applying on floating types.
+- **Be careful with NOT (`~`)** → Different databases may handle signed integers differently (2’s complement representation).
+- **Document bitmask meanings** → Store mapping of flags (1=Read, 2=Write, etc.) in metadata tables.
+- **Prefer readability over compactness** → Bitwise logic can confuse teammates; comment your queries.
+- **Indexing caution** → Bitwise operations in `WHERE` clauses may **prevent index usage** (can slow down queries).
+- **Cross-database portability** → Not all RDBMS support full set (Oracle uses `BITAND()` instead of `&`).
 
 ---
 
@@ -774,13 +774,13 @@ SELECT CustomerID FROM StoreSales;
 
 ### 6. Best Practices & Precautions
 
-✔ **Use `UNION ALL` when duplicates don’t matter** – it is faster (avoids costly duplicate elimination).
-✔ **Ensure column compatibility** – mismatched datatypes cause errors.
-✔ **Use meaningful column aliases** in the first `SELECT` (since result takes column names from it).
-✔ **Filter early** – apply `WHERE` before set operator to reduce data processed.
-✔ **Be cautious with performance** – set operators may require sorting & deduplication.
-✔ **Indexing** – ensure columns involved are indexed for faster comparisons.
-✔ **Use `EXCEPT`/`INTERSECT` carefully** – not available in older versions of MySQL (requires `JOIN` workaround).
+- **Use `UNION ALL` when duplicates don’t matter** – it is faster (avoids costly duplicate elimination).
+- **Ensure column compatibility** – mismatched datatypes cause errors.
+- **Use meaningful column aliases** in the first `SELECT` (since result takes column names from it).
+- **Filter early** – apply `WHERE` before set operator to reduce data processed.
+- **Be cautious with performance** – set operators may require sorting & deduplication.
+- **Indexing** – ensure columns involved are indexed for faster comparisons.
+- **Use `EXCEPT`/`INTERSECT` carefully** – not available in older versions of MySQL (requires `JOIN` workaround).
 
 ---
 
@@ -915,12 +915,12 @@ WHERE Salary > ALL (SELECT Salary FROM Employees WHERE DepartmentID = 2);
 
 ### 5. Best Practices & Precautions
 
-✔ **Use `IN` for short lists**, but for long lists use `JOIN` with a lookup table for performance.
-✔ **Avoid `NOT IN` with NULLs** → leads to unexpected results. Prefer `NOT EXISTS`.
-✔ **Use `BETWEEN` carefully** with dates → remember it includes both ends (may cause off-by-one issues with timestamps).
-✔ **Use `LIKE` with caution** → leading wildcard (`%abc`) disables index usage (slow).
-✔ Prefer **`EXISTS` over `IN`** when subquery is large → `EXISTS` stops at first match, `IN` checks all values.
-✔ **ANY / ALL** are powerful but less readable → use only if really needed, otherwise rewrite with `MIN` / `MAX`.
+- **Use `IN` for short lists**, but for long lists use `JOIN` with a lookup table for performance.
+- **Avoid `NOT IN` with NULLs** → leads to unexpected results. Prefer `NOT EXISTS`.
+- **Use `BETWEEN` carefully** with dates → remember it includes both ends (may cause off-by-one issues with timestamps).
+- **Use `LIKE` with caution** → leading wildcard (`%abc`) disables index usage (slow).
+- Prefer **`EXISTS` over `IN`** when subquery is large → `EXISTS` stops at first match, `IN` checks all values.
+- **ANY / ALL** are powerful but less readable → use only if really needed, otherwise rewrite with `MIN` / `MAX`.
 
 ---
 

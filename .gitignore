@@ -1,0 +1,4 @@
+# Avoid csv,excel files
+*.csv
+*.xlsx
+Data/

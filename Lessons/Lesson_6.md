@@ -171,12 +171,12 @@ WHEN NOT MATCHED THEN
 
 ### Best Practices & Precautions for DML
 
-✔ Always use `WHERE` in `UPDATE` & `DELETE` to avoid unintended full-table modifications.
-✔ Use **transactions** (`BEGIN`, `COMMIT`, `ROLLBACK`) when applying large updates/deletes.
-✔ Prefer `MERGE` for synchronization rather than multiple `INSERT` + `UPDATE`.
-✔ Use `SELECT` with `LIMIT` (or `TOP`) to test queries before applying large changes.
-✔ Use `INSERT ... SELECT` for bulk inserts instead of row-by-row insertion.
-✔ Consider performance → `DELETE` is logged row-by-row (slow for large datasets), while `TRUNCATE` is faster.
+- Always use `WHERE` in `UPDATE` & `DELETE` to avoid unintended full-table modifications.
+- Use **transactions** (`BEGIN`, `COMMIT`, `ROLLBACK`) when applying large updates/deletes.
+- Prefer `MERGE` for synchronization rather than multiple `INSERT` + `UPDATE`.
+- Use `SELECT` with `LIMIT` (or `TOP`) to test queries before applying large changes.
+- Use `INSERT ... SELECT` for bulk inserts instead of row-by-row insertion.
+- Consider performance → `DELETE` is logged row-by-row (slow for large datasets), while `TRUNCATE` is faster.
 
 ---
 
@@ -288,12 +288,12 @@ DROP TABLE Employees;
 
 ### Best Practices & Precautions
 
-✔ Use **DELETE** when you need selective row removal with `WHERE`.
-✔ Use **TRUNCATE** when you want to clear all rows but keep structure (reset table).
-✔ Use **DROP** when you want to completely remove the table (schema + data).
-✔ Always check **dependencies** before `DROP` (foreign keys, views, triggers).
-✔ Wrap `DELETE` or `TRUNCATE` in **transactions** when working in production.
-✔ For large datasets, prefer `TRUNCATE` over `DELETE` (performance).
+- Use **DELETE** when you need selective row removal with `WHERE`.
+- Use **TRUNCATE** when you want to clear all rows but keep structure (reset table).
+- Use **DROP** when you want to completely remove the table (schema + data).
+- Always check **dependencies** before `DROP` (foreign keys, views, triggers).
+- Wrap `DELETE` or `TRUNCATE` in **transactions** when working in production.
+- For large datasets, prefer `TRUNCATE` over `DELETE` (performance).
 
 ---
 
