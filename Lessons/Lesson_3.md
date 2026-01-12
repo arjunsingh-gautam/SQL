@@ -325,12 +325,12 @@ Used to store text.
 
 ### 7. Best Practices for Choosing Data Types
 
-✅ Pick the **smallest size** that fits your data (saves storage + improves performance).
-✅ Use `DECIMAL` for money (not FLOAT).
-✅ Avoid `TEXT`/`BLOB` in frequently queried columns (slows performance).
-✅ Normalize → store large objects (images/files) outside DB, keep reference path in DB.
-✅ Use proper **date/time types** instead of VARCHAR to avoid parsing issues.
-✅ Define constraints (`NOT NULL`, `DEFAULT`, `CHECK`) to enforce data integrity.
+- Pick the **smallest size** that fits your data (saves storage + improves performance).
+- Use `DECIMAL` for money (not FLOAT).
+- Avoid `TEXT`/`BLOB` in frequently queried columns (slows performance).
+- Normalize → store large objects (images/files) outside DB, keep reference path in DB.
+- Use proper **date/time types** instead of VARCHAR to avoid parsing issues.
+- Define constraints (`NOT NULL`, `DEFAULT`, `CHECK`) to enforce data integrity.
 
 ---
 

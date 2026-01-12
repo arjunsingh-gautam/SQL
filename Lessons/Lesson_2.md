@@ -49,7 +49,7 @@ DROP COLUMN Age;
 ### (c) **DROP**
 
 - Used to **delete database objects** (tables, views, indexes, databases).
-- ⚠️ Deletes the structure **and all data inside** (no undo).
+- - ️ Deletes the structure **and all data inside** (no undo).
 
 ```sql
 DROP TABLE Employees;
@@ -107,11 +107,11 @@ COMMENT ON TABLE Employees IS 'Stores employee information';
 
 ### 🔹 4. Best Practices
 
-✅ Always **backup important data** before using `DROP` or `TRUNCATE`.
-✅ Use **meaningful names** for objects (tables, views, indexes).
-✅ Prefer `ALTER` over dropping/re-creating tables → avoids data loss.
-✅ Document schema changes with `COMMENT` if supported.
-✅ Use **version control for schema changes** in big projects (migration scripts).
+- Always **backup important data** before using `DROP` or `TRUNCATE`.
+- Use **meaningful names** for objects (tables, views, indexes).
+- Prefer `ALTER` over dropping/re-creating tables → avoids data loss.
+- Document schema changes with `COMMENT` if supported.
+- Use **version control for schema changes** in big projects (migration scripts).
 
 ---
 
@@ -296,31 +296,31 @@ CREATE USER analyst IDENTIFIED BY 'StrongPass123';
 
 ### 5. Best Practices
 
-✅ **Use meaningful names**
+- **Use meaningful names**
 
 - Example: `Employees` instead of `EmpTbl`, `CustomerOrders` instead of `C_Ord`.
 
-✅ **Always specify constraints**
+- **Always specify constraints**
 
 - Define `PRIMARY KEY`, `UNIQUE`, `NOT NULL`, and `CHECK` early.
 
-✅ **Normalize your tables**
+- **Normalize your tables**
 
 - Avoid storing redundant data. Split into multiple related tables.
 
-✅ **Use schema for organization**
+- **Use schema for organization**
 
 - Example: `Sales.Orders`, `HR.Employees`.
 
-✅ **Index carefully**
+- **Index carefully**
 
 - Create indexes only on frequently searched columns.
 
-✅ **Set default values**
+- **Set default values**
 
 - Helps maintain data consistency.
 
-✅ **Comment your schema** (if DB supports `COMMENT`)
+- **Comment your schema** (if DB supports `COMMENT`)
 
 ```sql
 COMMENT ON TABLE Employees IS 'Stores company employee details';
@@ -351,23 +351,23 @@ All these need **unique, valid names** following SQL standards.
 
 ### 2. General Naming Rules (apply across most RDBMS)
 
-✅ **Length**
+- **Length**
 
 - Most SQL databases allow up to **30 characters** (Oracle), **63 characters** (Postgres), or **128 characters** (SQL Server/MySQL).
 - Always check your DBMS limit.
 
-✅ **Allowed Characters**
+- **Allowed Characters**
 
 - Must **start with a letter or underscore (`_`)** (some DBs allow numbers if quoted).
 - Can contain **letters, digits, and underscores (`_`)**.
 - No spaces, hyphens, or special characters (`@ # $ % ^ & *`).
 
-✅ **Case Sensitivity**
+- **Case Sensitivity**
 
 - **Oracle, SQL Server, MySQL (default):** Not case-sensitive (`Employee` = `EMPLOYEE`).
 - **PostgreSQL:** Case-sensitive if double-quoted (`"Employee"` ≠ `"employee"`).
 
-✅ **Reserved Keywords**
+- **Reserved Keywords**
 
 - Cannot use SQL keywords as object names (e.g., `SELECT`, `TABLE`, `USER`).
 - If you must, enclose in quotes/brackets (not recommended).
@@ -376,7 +376,7 @@ All these need **unique, valid names** following SQL standards.
 CREATE TABLE "User" (id INT); -- Works but bad practice
 ```
 
-✅ **Uniqueness**
+- **Uniqueness**
 
 - Must be unique within the same namespace/schema.
 
@@ -386,7 +386,7 @@ CREATE TABLE "User" (id INT); -- Works but bad practice
 
 ### 3. Best Practices for Naming
 
-### ✅ Tables
+### - Tables
 
 - Use **singular form** (represents one entity).
 
@@ -395,7 +395,7 @@ CREATE TABLE "User" (id INT); -- Works but bad practice
 
 - Use descriptive names, avoid abbreviations unless standard.
 
-### ✅ Columns
+### - Columns
 
 - Be descriptive, but concise.
 - Include unit/context if relevant.
@@ -403,7 +403,7 @@ CREATE TABLE "User" (id INT); -- Works but bad practice
   - `Salary` → better as `SalaryUSD`.
   - `CreatedAt` → better than `CrtDt`.
 
-### ✅ Constraints
+### - Constraints
 
 - Prefix with type:
 
@@ -411,21 +411,21 @@ CREATE TABLE "User" (id INT); -- Works but bad practice
   - `FK_Orders_Customers` (Foreign Key)
   - `CHK_Employee_Age` (Check constraint)
 
-### ✅ Indexes
+### - Indexes
 
 - Prefix with `IX_` or `IDX_`:
 
   - `IX_Employees_Name`
 
-### ✅ Stored Procedures/Functions
+### - Stored Procedures/Functions
 
 - Prefix with `sp_`, `fn_`, or project code.
 
   - `sp_GetEmployeeDetails`, `fn_CalcTax`.
 
-### ✅ Avoid
+### - Avoid
 
-- Spaces (`Employee Name` ❌ → `Employee_Name` ✅)
+- Spaces (`Employee Name` ❌ → `Employee_Name` -)
 - Mixed conventions (`EmpID` in one table, `EmployeeID` in another).
 - Overly long names.
 
@@ -434,7 +434,7 @@ CREATE TABLE "User" (id INT); -- Works but bad practice
 ### 4. Examples
 
 ```sql
--- ✅ Good Naming
+-- - Good Naming
 CREATE TABLE Employee (
     EmployeeID INT PRIMARY KEY,
     FirstName VARCHAR(50) NOT NULL,
@@ -620,22 +620,22 @@ ALTER COLUMN Salary DROP DEFAULT;
 
 ### 5. Precautions While Using `ALTER`
 
-⚠️ **Always backup** before structural changes.
-⚠️ **Check dependencies** (views, procedures, triggers may break if you rename/drop columns).
-⚠️ **Avoid dropping columns lightly** → Data will be lost permanently.
-⚠️ **Changing datatype** may cause truncation or conversion errors.
-⚠️ **Use staging environments** before applying `ALTER` in production.
+- ️ **Always backup** before structural changes.
+- ️ **Check dependencies** (views, procedures, triggers may break if you rename/drop columns).
+- ️ **Avoid dropping columns lightly** → Data will be lost permanently.
+- ️ **Changing datatype** may cause truncation or conversion errors.
+- ️ **Use staging environments** before applying `ALTER` in production.
 
 ---
 
 ### 6. Best Practices for `ALTER`
 
-✅ **Plan schema changes** → Use version control (migration scripts).
-✅ **Use meaningful constraint/index names** (e.g., `FK_Orders_Customers`).
-✅ **Keep changes atomic** → Prefer one `ALTER` per migration for rollback clarity.
-✅ **Communicate changes** to developers/teams (renamed columns break queries).
-✅ **Add defaults & constraints** proactively (avoid `NULL` chaos later).
-✅ **Test after altering** → Run queries to validate integrity.
+- **Plan schema changes** → Use version control (migration scripts).
+- **Use meaningful constraint/index names** (e.g., `FK_Orders_Customers`).
+- **Keep changes atomic** → Prefer one `ALTER` per migration for rollback clarity.
+- **Communicate changes** to developers/teams (renamed columns break queries).
+- **Add defaults & constraints** proactively (avoid `NULL` chaos later).
+- **Test after altering** → Run queries to validate integrity.
 
 ---
 
@@ -753,10 +753,10 @@ ALTER TABLE Employees DROP FOREIGN KEY fk_dept; -- MySQL
 
 ### 5. Precautions while using `DROP`
 
-⚠️ **Backup before dropping** → Once dropped, recovery is only possible from backup.
-⚠️ **Check dependencies** → Use `CASCADE` carefully; it may drop unintended objects.
-⚠️ **Avoid in production without approval** → Dropping a wrong table or DB can cause outages.
-⚠️ **Never DROP in scripts blindly** → Prefer `IF EXISTS` to avoid runtime errors.
+- ️ **Backup before dropping** → Once dropped, recovery is only possible from backup.
+- ️ **Check dependencies** → Use `CASCADE` carefully; it may drop unintended objects.
+- ️ **Avoid in production without approval** → Dropping a wrong table or DB can cause outages.
+- ️ **Never DROP in scripts blindly** → Prefer `IF EXISTS` to avoid runtime errors.
 
 Example:
 
@@ -768,11 +768,11 @@ DROP TABLE IF EXISTS Employees;
 
 ### 6. Best Practices
 
-✅ Use **`IF EXISTS`** (if supported) to avoid errors.
-✅ Drop **test/staging objects** only after ensuring they are not needed.
-✅ Use **CASCADE carefully** – double-check dependent objects first.
-✅ Document and version-control schema changes.
-✅ In production:
+- Use **`IF EXISTS`** (if supported) to avoid errors.
+- Drop **test/staging objects** only after ensuring they are not needed.
+- Use **CASCADE carefully** – double-check dependent objects first.
+- Document and version-control schema changes.
+- In production:
 
 - Prefer **soft deletion** (mark as inactive) over `DROP` when possible.
 - If dropping is required, get **team confirmation + backup snapshot**.
@@ -788,10 +788,6 @@ DROP TABLE IF EXISTS Employees;
 ---
 
 ## <span style="color:#0a9396">**CASCADE in SQL**</span>
-
-Excellent question 👍 — **`CASCADE`** is one of those things that seems small in SQL but is **hugely important when dealing with dependencies**. Let’s break it down clearly.
-
----
 
 ### 1. What is `CASCADE` in SQL?
 
@@ -892,16 +888,16 @@ FOREIGN KEY (DeptID) REFERENCES Departments(DeptID) ON UPDATE CASCADE
 
 ### 4. Precautions with `CASCADE`
 
-⚠️ **Danger of unintended deletion/update**
+- ️ **Danger of unintended deletion/update**
 
 - `ON DELETE CASCADE` can wipe out large amounts of data if a parent row is deleted.
 - `DROP … CASCADE` can remove far more objects than expected.
 
-⚠️ **Use only where logical**
+- ️ **Use only where logical**
 
 - Example: Deleting a `Department` → maybe you want employees to be reassigned, not deleted. In such cases, avoid cascade.
 
-⚠️ **Prefer explicit control in production**
+- ️ **Prefer explicit control in production**
 
 - In critical systems, many DBAs prefer manual handling over automatic cascade.
 
@@ -909,11 +905,11 @@ FOREIGN KEY (DeptID) REFERENCES Departments(DeptID) ON UPDATE CASCADE
 
 ### 5. Best Practices
 
-✅ Use `CASCADE` in **lookup tables** (e.g., delete a product category → its products also removed).
-✅ Avoid `CASCADE` in critical entities (e.g., deleting a customer → you don’t want to lose all their invoices).
-✅ Document cascade relationships clearly.
-✅ Test `CASCADE` effects in staging before applying to production.
-✅ Use `DROP … CASCADE` carefully — check dependencies first using DB’s system catalog (`INFORMATION_SCHEMA`, `pg_depend`, etc.).
+- Use `CASCADE` in **lookup tables** (e.g., delete a product category → its products also removed).
+- Avoid `CASCADE` in critical entities (e.g., deleting a customer → you don’t want to lose all their invoices).
+- Document cascade relationships clearly.
+- Test `CASCADE` effects in staging before applying to production.
+- Use `DROP … CASCADE` carefully — check dependencies first using DB’s system catalog (`INFORMATION_SCHEMA`, `pg_depend`, etc.).
 
 ---
 
@@ -1019,19 +1015,19 @@ TRUNCATE TABLE Employees; -- Much faster
 
 ### 5. Precautions While Using `TRUNCATE`
 
-⚠️ **Irrecoverable Data Loss**
+- ️ **Irrecoverable Data Loss**
 
 - All data is gone instantly. No `WHERE` clause, no selective delete.
 
-⚠️ **Foreign Key Restrictions**
+- ️ **Foreign Key Restrictions**
 
 - If a table is referenced by another (via FK), you can’t truncate it unless constraints are dropped or disabled.
 
-⚠️ **Identity Reset**
+- ️ **Identity Reset**
 
 - May cause unexpected behavior if applications rely on sequence values.
 
-⚠️ **Production Danger**
+- ️ **Production Danger**
 
 - Truncating the wrong table in production = catastrophic.
 
@@ -1039,12 +1035,12 @@ TRUNCATE TABLE Employees; -- Much faster
 
 ### 6. Best Practices
 
-✅ Use `TRUNCATE` only when you need to **clear entire tables quickly**.
-✅ Avoid on **critical transactional tables** unless you’re 100% sure.
-✅ Use it in **staging/temp tables** where resetting is routine.
-✅ For selective deletion → use `DELETE` with `WHERE`, not `TRUNCATE`.
-✅ Always take a **backup** or snapshot before truncating production tables.
-✅ If possible, run inside a **transaction (if supported)** so you can rollback.
+- Use `TRUNCATE` only when you need to **clear entire tables quickly**.
+- Avoid on **critical transactional tables** unless you’re 100% sure.
+- Use it in **staging/temp tables** where resetting is routine.
+- For selective deletion → use `DELETE` with `WHERE`, not `TRUNCATE`.
+- Always take a **backup** or snapshot before truncating production tables.
+- If possible, run inside a **transaction (if supported)** so you can rollback.
 
 ---
 
@@ -1161,23 +1157,23 @@ EXEC sp_rename 'Employees', 'Staff'; -- renames table
 
 ### 5. Precautions while Using `RENAME`
 
-⚠️ **Check Dependencies**
+- ️ **Check Dependencies**
 
 - Ensure no active code depends on the old name (procedures, views, triggers, APIs).
 
-⚠️ **Consistent Naming Conventions**
+- ️ **Consistent Naming Conventions**
 
 - Renaming inconsistently may confuse developers.
 
-⚠️ **Backwards Compatibility**
+- ️ **Backwards Compatibility**
 
 - If renaming in production, update all applications & reports.
 
-⚠️ **Privileges Required**
+- ️ **Privileges Required**
 
 - Need `ALTER` or `DROP/CREATE` privileges for object renaming.
 
-⚠️ **Avoid Frequent Renames**
+- ️ **Avoid Frequent Renames**
 
 - Causes maintenance headaches.
 
@@ -1185,11 +1181,11 @@ EXEC sp_rename 'Employees', 'Staff'; -- renames table
 
 ### 6. Best Practices
 
-✅ Use **meaningful, consistent names** from the start → avoid frequent renaming.
-✅ If renaming is necessary, **update all references** (queries, code, views).
-✅ Maintain a **migration/change log** documenting renamed objects.
-✅ Test renaming in a **staging environment** before applying in production.
-✅ For big projects, introduce **database abstraction layers** (ORM, views) to minimize direct dependency on raw table/column names.
+- Use **meaningful, consistent names** from the start → avoid frequent renaming.
+- If renaming is necessary, **update all references** (queries, code, views).
+- Maintain a **migration/change log** documenting renamed objects.
+- Test renaming in a **staging environment** before applying in production.
+- For big projects, introduce **database abstraction layers** (ORM, views) to minimize direct dependency on raw table/column names.
 
 ---
 
@@ -1327,10 +1323,10 @@ COMMIT;     -- save permanently
 
 ### 5. Best Practices
 
-✅ For **production applications**, keep auto-commit **OFF** and control transactions manually → ensures atomicity.
-✅ For **ad-hoc queries/testing**, auto-commit ON is fine (less hassle).
-✅ Always `ROLLBACK` after testing queries if you didn’t mean to commit.
-✅ In multi-statement operations (e.g., money transfers), **disable auto-commit** so you can rollback if something fails.
+- For **production applications**, keep auto-commit **OFF** and control transactions manually → ensures atomicity.
+- For **ad-hoc queries/testing**, auto-commit ON is fine (less hassle).
+- Always `ROLLBACK` after testing queries if you didn’t mean to commit.
+- In multi-statement operations (e.g., money transfers), **disable auto-commit** so you can rollback if something fails.
 
 ---
 
@@ -1438,10 +1434,10 @@ SELECT * FROM Employees;
 
 ### 7. Best Practices
 
-✅ Run DDL operations (ALTER, DROP, RENAME) during **maintenance windows**.
-✅ Keep transactions **short-lived** to avoid holding schema locks for long.
-✅ Use **`WITH (NOLOCK)`** (in SQL Server) cautiously if you want to read without waiting for locks.
-✅ Monitor locks with system views (`sys.dm_tran_locks` in SQL Server, `pg_locks` in PostgreSQL).
+- Run DDL operations (ALTER, DROP, RENAME) during **maintenance windows**.
+- Keep transactions **short-lived** to avoid holding schema locks for long.
+- Use **`WITH (NOLOCK)`** (in SQL Server) cautiously if you want to read without waiting for locks.
+- Monitor locks with system views (`sys.dm_tran_locks` in SQL Server, `pg_locks` in PostgreSQL).
 
 ---
 
