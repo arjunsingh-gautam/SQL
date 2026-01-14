@@ -1,6 +1,6 @@
-# <span style="color:#a7c957">**Lesson-11 SQL**</span>
+### <span style="color:#a7c957">**Lesson-11 SQL**</span>
 
-<span style="color:#0a9396">**GROUP BY clause**</span>
+<span style="color:###0a9396">**GROUP BY clause**</span>
 
 1.  Syntax of `GROUP BY`
 
@@ -162,14 +162,14 @@ This is exactly what **GROUP BY** does.
 
 <span style="color:red; font-size:22px; font-weight:bold"> 3. Why aggregation of attributes not being grouped is necessary?</span>
 
-# Key rule (very important):
+### Key rule (very important):
 
 👉 **Every selected attribute must be either:**
 
 - Used in `GROUP BY`, **or**
 - Used inside an **aggregate function**
 
-# Why? (First principle reasoning)
+### Why? (First principle reasoning)
 
 Suppose this table:
 
@@ -195,7 +195,7 @@ GROUP BY dept;
 👉 SQL **cannot invent values**.
 This violates **determinism**.
 
-# Conclusion:
+### Conclusion:
 
 Attributes **not used for grouping must be aggregated**, otherwise result is ambiguous.
 
@@ -203,9 +203,9 @@ Attributes **not used for grouping must be aggregated**, otherwise result is amb
 
 <span style="color:red; font-size:22px; font-weight:bold"> 4. Can we group without aggregation?</span>
 
-# Technically: YES
+### Technically: YES
 
-# Practically: NOT useful
+### Practically: NOT useful
 
 Example:
 
@@ -227,7 +227,7 @@ SELECT DISTINCT dept FROM employee;
 
 <span style="color:red; font-size:22px; font-weight:bold"> 5. Why grouping attribute does NOT need aggregation?</span>
 
-# First principles explanation
+### First principles explanation
 
 - A **grouping attribute defines the identity of a group**
 - It has the **same value for all rows in that group**
@@ -255,7 +255,7 @@ Since the value is **constant**, aggregation is meaningless.
 
 <span style="color:red; font-size:22px; font-weight:bold"> 6. Necessary conditions for GROUP BY to work properly</span>
 
-# Condition 1: SELECT rule
+### Condition 1: SELECT rule
 
 Every column in `SELECT` must be:
 
@@ -264,26 +264,26 @@ Every column in `SELECT` must be:
 
 ---
 
-# Condition 2: Aggregates operate per group
+### Condition 2: Aggregates operate per group
 
 Aggregate functions (`SUM`, `COUNT`, `AVG`, `MIN`, `MAX`) operate **within each group**, not globally.
 
 ---
 
-# Condition 3: WHERE vs HAVING
+### Condition 3: WHERE vs HAVING
 
 - `WHERE` → filters rows **before grouping**
 - `HAVING` → filters groups **after aggregation**
 
 ---
 
-# Condition 4: GROUP BY columns define uniqueness
+### Condition 4: GROUP BY columns define uniqueness
 
 Number of output rows = number of **distinct group keys**
 
 ---
 
-# Condition 5: Functional dependency (advanced but important)
+### Condition 5: Functional dependency (advanced but important)
 
 If column `B` is functionally dependent on column `A`, then:
 
@@ -297,7 +297,7 @@ can safely include `B` (allowed in MySQL, not in strict SQL).
 
 <span style="color:red; font-size:22px; font-weight:bold"> 7. Step-by-step working of GROUP BY (with example)</span>
 
-# Table: `sales`
+### Table: `sales`
 
 | region | product | amount |
 | ------ | ------- | ------ |
@@ -308,7 +308,7 @@ can safely include `B` (allowed in MySQL, not in strict SQL).
 
 ---
 
-# Query:
+### Query:
 
 ```sql
 SELECT region, SUM(amount)
@@ -318,19 +318,19 @@ GROUP BY region;
 
 ---
 
-# Step 1: FROM
+### Step 1: FROM
 
 Load entire table.
 
 ---
 
-# Step 2: WHERE (if present)
+### Step 2: WHERE (if present)
 
 (Filter rows — none here)
 
 ---
 
-# Step 3: GROUP BY
+### Step 3: GROUP BY
 
 Partition rows:
 
@@ -339,7 +339,7 @@ Partition rows:
 
 ---
 
-# Step 4: Aggregation
+### Step 4: Aggregation
 
 Apply `SUM(amount)`:
 
@@ -348,7 +348,7 @@ Apply `SUM(amount)`:
 
 ---
 
-# Step 5: SELECT projection
+### Step 5: SELECT projection
 
 Output:
 
@@ -361,7 +361,7 @@ Output:
 
 <span style="color:red; font-size:22px; font-weight:bold"> 8. Precautions and common mistakes</span>
 
-# ❌ Mistake 1: Selecting non-grouped column
+### ❌ Mistake 1: Selecting non-grouped column
 
 ```sql
 SELECT region, product, SUM(amount)
@@ -373,7 +373,7 @@ GROUP BY region;
 
 ---
 
-# ❌ Mistake 2: Using WHERE with aggregate
+### ❌ Mistake 2: Using WHERE with aggregate
 
 ```sql
 WHERE SUM(amount) > 50   -- ❌ invalid
@@ -387,7 +387,7 @@ HAVING SUM(amount) > 50
 
 ---
 
-# ❌ Mistake 3: Thinking GROUP BY sorts data
+### ❌ Mistake 3: Thinking GROUP BY sorts data
 
 GROUP BY **does not guarantee ordering**.
 
@@ -399,14 +399,14 @@ ORDER BY
 
 ---
 
-# ❌ Mistake 4: Misunderstanding COUNT(\*)
+### ❌ Mistake 4: Misunderstanding COUNT(\*)
 
 - `COUNT(*)` → counts rows
 - `COUNT(column)` → ignores NULLs
 
 ---
 
-# ❌ Mistake 5: Assuming SQL allows chaining logic
+### ❌ Mistake 5: Assuming SQL allows chaining logic
 
 ```sql
 GROUP BY a > b > c  -- ❌ invalid logic
