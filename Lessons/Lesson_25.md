@@ -1,445 +1,376 @@
-# <span style="color:#a7c957" >**Lesson-25 SQL**</span>
+# <span style="color:#a7c957" >**Lesson-24 SQL**</span>
 
 
+# **Subqueries in SQL**
 
-## **1. What is a CTE (Common Table Expression)?**
-
-👉 A **CTE** is like a **temporary named result set** that you define within a query and use immediately in the same query.
-
-* Think of it as a **"named subquery"** that makes SQL more readable and reusable.
-* Defined using `WITH` clause.
+A **subquery** (also called an inner query or nested query) is a query **inside another query**.
+Subqueries can return a single value, a list of values, or a table depending on how they are used.
 
 ---
 
-## **2. Syntax**
+## **1. Scalar Subqueries**
+
+### **Definition**
+
+* Returns **a single value** (1 row, 1 column).
+* Can be used in `SELECT`, `WHERE`, or `HAVING` clauses.
+
+### **Syntax**
 
 ```sql
-WITH cte_name (optional_column_list) AS (
-    -- SQL query here (subquery)
-)
-SELECT ...
-FROM cte_name;
+SELECT column1, 
+       (SELECT column2 
+        FROM table2 
+        WHERE table2.id = table1.id) AS derived_column
+FROM table1;
 ```
 
-🔑 Notes:
+### **Working**
 
-* `cte_name` = alias for the temporary result set.
-* You can define **multiple CTEs** separated by commas.
-* You can even create **recursive CTEs**.
+1. Inner query executes first.
+2. Returns a single value.
+3. Outer query uses that value like a constant.
 
----
-
-## **3. Functions & Use Cases**
-
-✅ **Break complex queries into readable steps**.
-✅ **Re-use a computed result set multiple times** in a query.
-✅ **Recursive queries** (hierarchies, organizational charts, tree traversal).
-✅ Better than subqueries when:
-
-* The same subquery is reused multiple times.
-* Query is too long and messy.
-
----
-
-## **4. Internal Working**
-
-* A CTE is **evaluated once** (like a temporary view).
-* The query optimizer may inline it (treat it like a subquery).
-* Exists only during query execution — **not stored permanently**.
-* For recursive CTEs → SQL engine repeatedly executes until termination condition is met.
-
----
-
-## **5. Precautions**
-
-⚠️ CTE is **not stored** → don’t confuse with temp tables.
-⚠️ Recursive CTEs can lead to **infinite loops** → always add a termination condition.
-⚠️ Some databases (older MySQL versions <8.0) did not support CTEs.
-⚠️ For performance, large CTEs may be **recomputed multiple times** (depends on DB engine).
-
----
-
-## **6. Analogy & Concept to Remember**
-
-Think of a **CTE as giving a nickname to a subquery**.
-
-* Without CTE → you repeat the same subquery multiple times.
-* With CTE → you say *"I’ll name this subquery as `X` and reuse it wherever I need."*
-
-👉 Analogy:
-Like creating a **function in programming** instead of repeating the same code block.
-
----
-
-## **7. Example**
-
-Suppose we have **Employee** and **Department** tables:
+### **Example**
 
 ```sql
-CREATE TABLE Department (
-    dept_id INT PRIMARY KEY,
-    dept_name VARCHAR(50)
-);
-
-CREATE TABLE Employee (
-    emp_id INT PRIMARY KEY,
-    emp_name VARCHAR(50),
-    salary INT,
-    dept_id INT,
-    manager_id INT
-);
-```
-
-### Insert sample data
-
-```sql
-INSERT INTO Department VALUES
-(1, 'IT'), (2, 'HR'), (3, 'Finance');
-
-INSERT INTO Employee VALUES
-(101, 'Alice', 50000, 1, NULL),
-(102, 'Bob', 60000, 1, 101),
-(103, 'Charlie', 55000, 2, NULL),
-(104, 'David', 70000, 3, NULL),
-(105, 'Eva', 65000, 1, 101),
-(106, 'Frank', 40000, 2, 103);
-```
-
----
-
-### Example 1: Simple CTE (Department total salary)
-
-```sql
-WITH DeptSalary AS (
-    SELECT dept_id, SUM(salary) AS total_salary
-    FROM Employee
-    GROUP BY dept_id
-)
-SELECT e.emp_name, e.salary, d.total_salary
-FROM Employee e
-JOIN DeptSalary d ON e.dept_id = d.dept_id;
-```
-
-✔️ Instead of writing the salary `SUM` subquery multiple times, we defined it once in `DeptSalary`.
-
----
-
-### Example 2: Recursive CTE (Find employee hierarchy)
-
-```sql
-WITH RECURSIVE EmpHierarchy AS (
-    -- Anchor member (top managers)
-    SELECT emp_id, emp_name, manager_id, 1 AS level
-    FROM Employee
-    WHERE manager_id IS NULL
-    
-    UNION ALL
-    
-    -- Recursive member (employees reporting to others)
-    SELECT e.emp_id, e.emp_name, e.manager_id, eh.level + 1
-    FROM Employee e
-    JOIN EmpHierarchy eh ON e.manager_id = eh.emp_id
-)
-SELECT * FROM EmpHierarchy;
-```
-
-✔️ This will return hierarchy with levels (useful for org charts).
-
----
-
-## **8. Practice Questions**
-
-Using the `Employee` and `Department` schema:
-
-1. Write a CTE to find average salary per department and list employees whose salary is above average.
-2. Use a CTE to find the highest paid employee in each department.
-3. Use a recursive CTE to list all employees under Alice (transitive reporting).
-4. Create a CTE to count how many employees are in each department.
-5. Find employees working in departments where total salary exceeds `100000`.
-
----
-
-👉 So, CTEs are basically: **subqueries with a name** → improving readability, reusability, and recursive capability.
-
----
-
-
-
-# **Dry Run**
-
-# **Schema Assumption (Employee Table)**
-
-Suppose we have this data:
-
-| emp\_id | emp\_name | manager\_id |
-| ------- | --------- | ----------- |
-| 1       | Alice     | NULL        |
-| 2       | Bob       | 1           |
-| 3       | Carol     | 1           |
-| 4       | David     | 2           |
-| 5       | Eva       | 2           |
-| 6       | Frank     | 3           |
-
-* Alice = **top-level manager** (no manager).
-* Bob & Carol report to Alice.
-* David & Eva report to Bob.
-* Frank reports to Carol.
-
----
-
-# **Query**
-
-```sql
-WITH RECURSIVE EmpHierarchy AS (
-    -- Anchor: top-level managers
-    SELECT emp_id, emp_name, manager_id, 1 AS level
-    FROM Employee
-    WHERE manager_id IS NULL
-    
-    UNION ALL
-    
-    -- Recursive: employees reporting to previous set
-    SELECT e.emp_id, e.emp_name, e.manager_id, eh.level + 1
-    FROM Employee e
-    JOIN EmpHierarchy eh ON e.manager_id = eh.emp_id
-)
-SELECT * FROM EmpHierarchy;
-```
-
----
-
-# **Execution Dry Run**
-
-## **Step 1: Anchor Member**
-
-```sql
-SELECT emp_id, emp_name, manager_id, 1 AS level
+-- Find all employees whose salary is greater than the average salary
+SELECT emp_name, salary
 FROM Employee
-WHERE manager_id IS NULL;
+WHERE salary > (SELECT AVG(salary) FROM Employee);
 ```
 
-👉 Returns **top-level manager(s):**
+### **Execution Order**
 
-| emp\_id | emp\_name | manager\_id | level |
-| ------- | --------- | ----------- | ----- |
-| 1       | Alice     | NULL        | 1     |
+1. Subquery: `SELECT AVG(salary) FROM Employee` → returns single value.
+2. Outer query: compares each employee's salary to that value.
 
-➡️ These rows go into `EmpHierarchy` as the **initial dataset**.
+### **Precautions**
+
+* Ensure the subquery returns **exactly one value**.
+* If it returns more than one row → error.
 
 ---
 
-## **Step 2: Recursive Member (1st Iteration)**
+## **2. Multi-row Subqueries**
+
+### **Definition**
+
+* Returns **multiple rows** (1 column) or **multiple columns** (rare).
+* Often used with operators: `IN`, `ANY`, `ALL`, `EXISTS`.
+
+---
+
+### **2a. Using IN**
 
 ```sql
-SELECT e.emp_id, e.emp_name, e.manager_id, eh.level + 1
+SELECT emp_name
+FROM Employee
+WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
+```
+
+* Returns all employees working in departments located in NY.
+
+---
+
+### **2b. Using ANY / SOME**
+
+```sql
+SELECT emp_name, salary
+FROM Employee
+WHERE salary > ANY (SELECT salary FROM Employee WHERE dept_id=2);
+```
+
+* Returns employees whose salary is **greater than at least one employee** in dept 2.
+
+---
+
+### **2c. Using ALL**
+
+```sql
+SELECT emp_name, salary
+FROM Employee
+WHERE salary > ALL (SELECT salary FROM Employee WHERE dept_id=2);
+```
+
+* Returns employees whose salary is **greater than every employee** in dept 2.
+
+---
+
+### **Execution Order**
+
+1. Subquery executes first → produces multiple rows.
+2. Outer query compares each outer row against **set of results** from subquery.
+
+### **Precautions**
+
+* `IN` requires compatible types between outer column and subquery column.
+* For `ANY/ALL`, use relational operators (`>`, `<`, `=`) carefully.
+
+---
+
+## **3. Correlated Subqueries**
+
+### **Definition**
+
+* Inner query **depends on outer query**.
+* Evaluates **once per row** of outer query.
+
+### **Syntax**
+
+```sql
+SELECT emp_name, salary
 FROM Employee e
-JOIN EmpHierarchy eh ON e.manager_id = eh.emp_id;
+WHERE salary > (SELECT AVG(salary) 
+                FROM Employee 
+                WHERE dept_id = e.dept_id);
 ```
 
-Now `eh` = `{ Alice }`.
+* Here, `e.dept_id` comes from the outer query → correlated.
 
-* Alice’s emp\_id = 1.
-* Find employees with `manager_id = 1`.
+### **Execution**
 
-👉 Matches Bob (2) and Carol (3).
+1. Outer query picks a row → passes its `dept_id` to inner query.
+2. Inner query calculates AVG salary for that dept.
+3. Outer query compares employee’s salary to that value.
+4. Repeat for every row.
 
-| emp\_id | emp\_name | manager\_id | level |
-| ------- | --------- | ----------- | ----- |
-| 2       | Bob       | 1           | 2     |
-| 3       | Carol     | 1           | 2     |
+### **Use Cases**
 
-➡️ Added to results.
+* Filtering by group-based aggregate conditions.
+* Conditional calculations.
 
----
+### **Precautions**
 
-## **Step 3: Recursive Member (2nd Iteration)**
-
-Now `eh` = `{ Bob, Carol }`.
-
-* For Bob (emp\_id=2) → find employees with `manager_id=2` → David (4), Eva (5).
-* For Carol (emp\_id=3) → find employees with `manager_id=3` → Frank (6).
-
-| emp\_id | emp\_name | manager\_id | level |
-| ------- | --------- | ----------- | ----- |
-| 4       | David     | 2           | 3     |
-| 5       | Eva       | 2           | 3     |
-| 6       | Frank     | 3           | 3     |
-
-➡️ Added to results.
+* Can be **slow for large tables** (executes per outer row).
+* Prefer **JOIN + GROUP BY** if performance is a concern.
 
 ---
 
-## **Step 4: Recursive Member (3rd Iteration)**
+## **Use Cases for Subqueries**
 
-Now `eh` = `{ David, Eva, Frank }`.
-
-* Check if anyone has `manager_id = 4, 5, 6`.
-* None found.
-
-👉 Recursion stops.
-
----
-
-# **Final Result Set**
-
-| emp\_id | emp\_name | manager\_id | level |
-| ------- | --------- | ----------- | ----- |
-| 1       | Alice     | NULL        | 1     |
-| 2       | Bob       | 1           | 2     |
-| 3       | Carol     | 1           | 2     |
-| 4       | David     | 2           | 3     |
-| 5       | Eva       | 2           | 3     |
-| 6       | Frank     | 3           | 3     |
-
----
-
-# **Key Intuition**
-
-* **Anchor query** = starting point (`manager_id IS NULL`).
-* **Recursive query** = expands row by row, level by level.
-* The **level column** helps visualize the hierarchy depth.
-* Recursion ends when no more matches exist.
+| Use Case          | Example                                                          |
+| ----------------- | ---------------------------------------------------------------- |
+| Filtering         | Employees with salary above average                              |
+| Derived Column    | Show employee name + department budget (calculated via subquery) |
+| Conditional Check | List customers with orders only in a specific month              |
+| Exists Check      | Find products with no orders                                     |
 
 ---
 
 
 
 
+## **Multi-row Subquery**
 
-# **1. Syntax of Recursive CTE**
+### **How it works internally**
+
+1. The **subquery executes first**.
+2. It produces a **set of values** (like a list or array).
+
+   * Example: `SELECT dept_id FROM Department WHERE location='NY'` → `{1, 3}`
+3. The **outer query** compares each row against this set using operators like:
+
+   * `IN` → checks if outer value is in the set
+   * `ANY/SOME` → checks if outer value satisfies condition with **any element in the set**
+   * `ALL` → checks if outer value satisfies condition with **all elements in the set**
+
+---
+
+### **Example**
 
 ```sql
-WITH RECURSIVE cte_name (col1, col2, ...) AS (
-    -- 1. Anchor member (base query)
-    SELECT ...
+-- Departments in NY
+SELECT dept_id FROM Department WHERE location='NY';
+-- Output (conceptually as a list):
+-- {1, 3}
 
-    UNION ALL
-
-    -- 2. Recursive member (references the CTE itself)
-    SELECT ...
-    FROM cte_name
-    JOIN ...
-    WHERE ...
-)
-SELECT * FROM cte_name;
+-- Employees in those departments
+SELECT emp_name
+FROM Employee
+WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
 ```
 
-🔑 Points:
-
-* `WITH RECURSIVE` keyword is mandatory (at least in MySQL & PostgreSQL).
-* You need **two parts**:
-
-  * **Anchor member** → gives the starting point.
-  * **Recursive member** → repeatedly executed using results of previous step.
-* Must be joined with **`UNION ALL`** (to accumulate results).
+* **Subquery result**: `{1, 3}`
+* **Outer query**: `dept_id IN {1,3}` → matches Alice, Charlie, David
 
 ---
 
-# **2. Internal Working (Step-by-step Execution)**
+### **Key Points**
 
-👉 Think of recursion in programming:
-
-* Base case → recursion → stop condition.
-
-SQL engine does something similar:
-
-1. **Execute the Anchor query** → output forms the first set of rows.
-2. **Feed those rows into the Recursive query**.
-3. Append the new rows to the result set.
-4. Keep repeating until recursive query returns no new rows.
-5. Final result = Anchor + all recursive steps combined.
+* The subquery **does not literally store an array in memory**, but conceptually you can think of it as a **list/set of values** that the outer query uses for comparison.
+* **IN** expects **single-column subquery**.
+* `ANY` and `ALL` also operate over the “list” returned by the subquery.
 
 ---
 
-# **3. Precautions**
 
-⚠️ Must have a **termination condition**, otherwise → infinite loop.
-⚠️ Some DBs limit recursion depth (e.g., SQL Server default = 100, PostgreSQL/MySQL can be set).
-⚠️ Recursive CTEs can get expensive with large hierarchies (many iterations).
-⚠️ Always test with small dataset before applying to production.
 
----
+## **Correlated Subquery Execution**
 
-# **4. Simple Dry Run Example**
-
-Suppose we want to print numbers from **1 to 5**.
-
-### Table (dummy doesn’t matter here)
+A **correlated subquery** depends on the outer query. Example:
 
 ```sql
-WITH RECURSIVE Numbers AS (
-    -- Anchor member (start at 1)
-    SELECT 1 AS n
-    
-    UNION ALL
-    
-    -- Recursive member (increment by 1 each time)
-    SELECT n + 1
-    FROM Numbers
-    WHERE n < 5
-)
-SELECT * FROM Numbers;
-```
-
----
-
-### **Dry Run**
-
-* **Step 1 (Anchor):**
-  `n = 1` → first row.
-
-* **Step 2 (Recursive):**
-  Take `n=1`, apply recursion → `1+1=2`.
-  Now we have `{1, 2}`.
-
-* **Step 3:**
-  Take `n=2`, apply recursion → `2+1=3`.
-  Result = `{1, 2, 3}`.
-
-* **Step 4:**
-  Take `n=3`, apply recursion → `3+1=4`.
-  Result = `{1, 2, 3, 4}`.
-
-* **Step 5:**
-  Take `n=4`, apply recursion → `4+1=5`.
-  Result = `{1, 2, 3, 4, 5}`.
-
-* **Step 6:**
-  Now `n=5` but recursion condition is `n < 5`. So recursion stops.
-
-✔️ Final Output: `1, 2, 3, 4, 5`.
-
----
-
-# **5. Practical Example: Employee Hierarchy**
-
-```sql
-WITH RECURSIVE EmpHierarchy AS (
-    -- Anchor: top-level managers
-    SELECT emp_id, emp_name, manager_id, 1 AS level
+SELECT emp_name, salary
+FROM Employee e
+WHERE salary > (
+    SELECT AVG(salary)
     FROM Employee
-    WHERE manager_id IS NULL
-    
-    UNION ALL
-    
-    -- Recursive: employees reporting to previous set
-    SELECT e.emp_id, e.emp_name, e.manager_id, eh.level + 1
-    FROM Employee e
-    JOIN EmpHierarchy eh ON e.manager_id = eh.emp_id
-)
-SELECT * FROM EmpHierarchy;
+    WHERE dept_id = e.dept_id
+);
 ```
 
-### Dry Run (simplified)
-
-* Start with Alice (manager\_id = NULL).
-* Then find who reports to Alice → Bob, Eva.
-* Then find who reports to Bob → (none), Eva → (none).
-* Stop when no more employees found.
+* `e.dept_id` comes from the **outer row** → subquery must evaluate **per row**.
 
 ---
 
-✅ **Key intuition:** Recursive CTE = SQL’s way of doing loops/recursion.
+### **How MySQL Executes It**
+
+1. **Outer query picks the first row** of `Employee`.
+2. **Subquery executes** using the outer row’s value (`e.dept_id`).
+3. Subquery returns a value (scalar in this case).
+4. Outer query uses that value to **filter the current row**.
+5. Repeat steps 1–4 for every row in the outer query.
+
+✅ So the subquery is executed **iteration by iteration**, not once for all rows.
 
 ---
+
+### **Virtual Table / Temporary Storage**
+
+* The server **does not store all subquery results in a virtual table beforehand** because each subquery execution depends on the current outer row.
+* Conceptually, you can think of it as **“per-row evaluation with immediate projection”**.
+* Some optimizations (like **semi-join transformations**) may happen internally, but the logical behavior is **per-row execution**.
+
+---
+
+### **Key Points**
+
+| Point        | Explanation                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Iteration    | Subquery runs once per outer row.                                                            |
+| Projection   | Result of subquery is immediately used to filter or calculate for that outer row.            |
+| Optimization | MySQL may rewrite correlated subqueries as JOINs for performance internally.                 |
+| Caution      | For large tables, correlated subqueries can be **slow**. Prefer JOIN + GROUP BY if possible. |
+
+---
+
+### **Example Execution**
+
+| Outer Row | dept\_id | Subquery AVG(salary) for that dept | Outer row passes filter? |
+| --------- | -------- | ---------------------------------- | ------------------------ |
+| Alice     | 1        | AVG(salary where dept\_id=1)=52500 | Yes/No                   |
+| Bob       | 2        | AVG(salary where dept\_id=2)=62500 | Yes/No                   |
+| Charlie   | 1        | AVG(salary where dept\_id=1)=52500 | Yes/No                   |
+| …         | …        | …                                  | …                        |
+
+* Notice how **each outer row triggers a separate subquery execution**.
+
+---
+
+
+
+## **1. Think “Step-by-Step Filtering or Aggregation”**
+
+A subquery is useful when you want to **compute something first** and then use it in another query.
+
+### **Pattern**
+
+1. Compute a value or set of values.
+2. Use that result to filter, compare, or calculate in the outer query.
+
+**Example:**
+
+> “Get all employees whose salary is above the average.”
+
+* Step 1: Compute `AVG(salary)` → **subquery**
+* Step 2: Filter employees using that value → **outer query**
+
+```sql
+SELECT emp_name, salary
+FROM Employee
+WHERE salary > (SELECT AVG(salary) FROM Employee);
+```
+
+---
+
+## **2. When You Need Multi-Row Comparison**
+
+If you need to compare against a **set of values**, a subquery is very natural.
+
+**Example:**
+
+> “Find employees who work in departments located in NY.”
+
+```sql
+SELECT emp_name
+FROM Employee
+WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
+```
+
+* Inner query produces a **set/list of dept\_id**
+* Outer query checks membership → perfect subquery use case
+
+---
+
+## **3. When Outer Row Depends on Inner Calculation (Correlated Subquery)**
+
+If a row’s filtering or derived value depends on **its own group or context**, use a correlated subquery.
+
+**Example:**
+
+> “Find employees whose salary is higher than the **average salary of their department**.”
+
+```sql
+SELECT emp_name, salary
+FROM Employee e
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM Employee
+    WHERE dept_id = e.dept_id
+);
+```
+
+* Inner query depends on `e.dept_id` → correlated subquery.
+
+---
+
+## **4. When You Need Derived Columns**
+
+Subqueries are very useful to **compute a value and display it as a column**:
+
+```sql
+SELECT emp_name,
+       (SELECT dept_name FROM Department d WHERE d.dept_id = e.dept_id) AS dept_name
+FROM Employee e;
+```
+
+* Instead of a JOIN, a scalar subquery can sometimes be simpler.
+
+---
+
+## **5. When Not to Use Subqueries**
+
+* Large datasets with correlated subqueries → slow performance.
+* Can often be rewritten using **JOIN + GROUP BY**, which is more efficient.
+
+---
+
+## **Intuition Framework**
+
+1. **“Compute first, use later?”** → think **subquery**.
+2. **“Compare to a set/list?”** → think **multi-row subquery (IN/ANY/ALL)**.
+3. **“Need row-by-row context?”** → think **correlated subquery**.
+4. **“Derive a column?”** → think **scalar subquery**.
+5. **“Can it be a JOIN?”** → always consider JOIN first for performance.
+
+---
+
+### **Tip for Developing Intuition**
+
+* Ask: *“Can I solve this in one step, or do I need an intermediate result?”*
+* If intermediate result needed → subquery fits naturally.
+
+---
+
 

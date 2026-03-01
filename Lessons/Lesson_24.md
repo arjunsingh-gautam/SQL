@@ -1,376 +1,164 @@
-# <span style="color:#a7c957" >**Lesson-24 SQL**</span>
+# <span style="color:#a7c957" >**Lesson-23 SQL**</span>
+# 1️⃣ FULL OUTER JOIN
 
+### 🔹 **Working**
 
-# **Subqueries in SQL**
+* Combines the results of **LEFT JOIN** and **RIGHT JOIN**.
+* Returns **all rows** from both tables:
 
-A **subquery** (also called an inner query or nested query) is a query **inside another query**.
-Subqueries can return a single value, a list of values, or a table depending on how they are used.
+  * Matching rows where join condition is true.
+  * Non-matching rows with `NULL` for missing values.
+
+👉 Think of it as:
+`FULL OUTER JOIN = LEFT JOIN ∪ RIGHT JOIN`
 
 ---
 
-## **1. Scalar Subqueries**
-
-### **Definition**
-
-* Returns **a single value** (1 row, 1 column).
-* Can be used in `SELECT`, `WHERE`, or `HAVING` clauses.
-
-### **Syntax**
+### 🔹 **Syntax**
 
 ```sql
-SELECT column1, 
-       (SELECT column2 
-        FROM table2 
-        WHERE table2.id = table1.id) AS derived_column
-FROM table1;
+SELECT columns
+FROM tableA
+FULL OUTER JOIN tableB
+ON tableA.col = tableB.col;
 ```
 
-### **Working**
-
-1. Inner query executes first.
-2. Returns a single value.
-3. Outer query uses that value like a constant.
-
-### **Example**
+⚠️ Note: MySQL does **not** support FULL OUTER JOIN directly.
+We achieve it using `UNION`:
 
 ```sql
--- Find all employees whose salary is greater than the average salary
-SELECT emp_name, salary
-FROM Employee
-WHERE salary > (SELECT AVG(salary) FROM Employee);
+SELECT a.col, b.col
+FROM tableA a
+LEFT JOIN tableB b ON a.id = b.id
+UNION
+SELECT a.col, b.col
+FROM tableA a
+RIGHT JOIN tableB b ON a.id = b.id;
 ```
 
-### **Execution Order**
+---
 
-1. Subquery: `SELECT AVG(salary) FROM Employee` → returns single value.
-2. Outer query: compares each employee's salary to that value.
+### 🔹 **Use Cases**
 
-### **Precautions**
-
-* Ensure the subquery returns **exactly one value**.
-* If it returns more than one row → error.
+* Comparing **two datasets** (e.g., customers from two regions).
+* Finding mismatched or missing data across systems.
+* Merging logs/data where both sets must be preserved.
 
 ---
 
-## **2. Multi-row Subqueries**
+### 🔹 **Precautions & Limitations**
 
-### **Definition**
-
-* Returns **multiple rows** (1 column) or **multiple columns** (rare).
-* Often used with operators: `IN`, `ANY`, `ALL`, `EXISTS`.
+* **Not supported in MySQL directly** → must simulate with `UNION`.
+* Can return **large result sets** with many NULLs.
+* Harder to interpret if data is sparse.
 
 ---
 
-### **2a. Using IN**
+# 2️⃣ SELF JOIN
+
+### 🔹 **Working**
+
+* A table joined with **itself**.
+* You must use **aliases** to differentiate copies.
+* Useful for hierarchical data (e.g., employees and managers).
+
+---
+
+### 🔹 **Syntax**
 
 ```sql
-SELECT emp_name
-FROM Employee
-WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
+SELECT a.col, b.col
+FROM table a
+JOIN table b
+ON a.some_col = b.some_col;
 ```
 
-* Returns all employees working in departments located in NY.
+---
+
+### 🔹 **Use Cases**
+
+* Find employees who share the same manager.
+* Find duplicate records in a table.
+* Compare rows within the same table.
 
 ---
 
-### **2b. Using ANY / SOME**
+### 🔹 **Precautions & Limitations**
+
+* Without proper aliases → ambiguous column errors.
+* Large tables → performance heavy.
+* Must clearly define join condition to avoid **Cartesian products**.
+
+---
+
+# 3️⃣ 📘 Practice Schema
 
 ```sql
-SELECT emp_name, salary
-FROM Employee
-WHERE salary > ANY (SELECT salary FROM Employee WHERE dept_id=2);
-```
-
-* Returns employees whose salary is **greater than at least one employee** in dept 2.
-
----
-
-### **2c. Using ALL**
-
-```sql
-SELECT emp_name, salary
-FROM Employee
-WHERE salary > ALL (SELECT salary FROM Employee WHERE dept_id=2);
-```
-
-* Returns employees whose salary is **greater than every employee** in dept 2.
-
----
-
-### **Execution Order**
-
-1. Subquery executes first → produces multiple rows.
-2. Outer query compares each outer row against **set of results** from subquery.
-
-### **Precautions**
-
-* `IN` requires compatible types between outer column and subquery column.
-* For `ANY/ALL`, use relational operators (`>`, `<`, `=`) carefully.
-
----
-
-## **3. Correlated Subqueries**
-
-### **Definition**
-
-* Inner query **depends on outer query**.
-* Evaluates **once per row** of outer query.
-
-### **Syntax**
-
-```sql
-SELECT emp_name, salary
-FROM Employee e
-WHERE salary > (SELECT AVG(salary) 
-                FROM Employee 
-                WHERE dept_id = e.dept_id);
-```
-
-* Here, `e.dept_id` comes from the outer query → correlated.
-
-### **Execution**
-
-1. Outer query picks a row → passes its `dept_id` to inner query.
-2. Inner query calculates AVG salary for that dept.
-3. Outer query compares employee’s salary to that value.
-4. Repeat for every row.
-
-### **Use Cases**
-
-* Filtering by group-based aggregate conditions.
-* Conditional calculations.
-
-### **Precautions**
-
-* Can be **slow for large tables** (executes per outer row).
-* Prefer **JOIN + GROUP BY** if performance is a concern.
-
----
-
-## **Use Cases for Subqueries**
-
-| Use Case          | Example                                                          |
-| ----------------- | ---------------------------------------------------------------- |
-| Filtering         | Employees with salary above average                              |
-| Derived Column    | Show employee name + department budget (calculated via subquery) |
-| Conditional Check | List customers with orders only in a specific month              |
-| Exists Check      | Find products with no orders                                     |
-
----
-
-
-
-
-## **Multi-row Subquery**
-
-### **How it works internally**
-
-1. The **subquery executes first**.
-2. It produces a **set of values** (like a list or array).
-
-   * Example: `SELECT dept_id FROM Department WHERE location='NY'` → `{1, 3}`
-3. The **outer query** compares each row against this set using operators like:
-
-   * `IN` → checks if outer value is in the set
-   * `ANY/SOME` → checks if outer value satisfies condition with **any element in the set**
-   * `ALL` → checks if outer value satisfies condition with **all elements in the set**
-
----
-
-### **Example**
-
-```sql
--- Departments in NY
-SELECT dept_id FROM Department WHERE location='NY';
--- Output (conceptually as a list):
--- {1, 3}
-
--- Employees in those departments
-SELECT emp_name
-FROM Employee
-WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
-```
-
-* **Subquery result**: `{1, 3}`
-* **Outer query**: `dept_id IN {1,3}` → matches Alice, Charlie, David
-
----
-
-### **Key Points**
-
-* The subquery **does not literally store an array in memory**, but conceptually you can think of it as a **list/set of values** that the outer query uses for comparison.
-* **IN** expects **single-column subquery**.
-* `ANY` and `ALL` also operate over the “list” returned by the subquery.
-
----
-
-
-
-## **Correlated Subquery Execution**
-
-A **correlated subquery** depends on the outer query. Example:
-
-```sql
-SELECT emp_name, salary
-FROM Employee e
-WHERE salary > (
-    SELECT AVG(salary)
-    FROM Employee
-    WHERE dept_id = e.dept_id
+-- Customers table
+CREATE TABLE Customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(50),
+    city VARCHAR(50)
 );
-```
 
-* `e.dept_id` comes from the **outer row** → subquery must evaluate **per row**.
+INSERT INTO Customers VALUES
+(1, 'Alice', 'Delhi'),
+(2, 'Bob', 'Mumbai'),
+(3, 'Charlie', 'Pune'),
+(4, 'David', 'Delhi');
 
----
-
-### **How MySQL Executes It**
-
-1. **Outer query picks the first row** of `Employee`.
-2. **Subquery executes** using the outer row’s value (`e.dept_id`).
-3. Subquery returns a value (scalar in this case).
-4. Outer query uses that value to **filter the current row**.
-5. Repeat steps 1–4 for every row in the outer query.
-
-✅ So the subquery is executed **iteration by iteration**, not once for all rows.
-
----
-
-### **Virtual Table / Temporary Storage**
-
-* The server **does not store all subquery results in a virtual table beforehand** because each subquery execution depends on the current outer row.
-* Conceptually, you can think of it as **“per-row evaluation with immediate projection”**.
-* Some optimizations (like **semi-join transformations**) may happen internally, but the logical behavior is **per-row execution**.
-
----
-
-### **Key Points**
-
-| Point        | Explanation                                                                                  |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Iteration    | Subquery runs once per outer row.                                                            |
-| Projection   | Result of subquery is immediately used to filter or calculate for that outer row.            |
-| Optimization | MySQL may rewrite correlated subqueries as JOINs for performance internally.                 |
-| Caution      | For large tables, correlated subqueries can be **slow**. Prefer JOIN + GROUP BY if possible. |
-
----
-
-### **Example Execution**
-
-| Outer Row | dept\_id | Subquery AVG(salary) for that dept | Outer row passes filter? |
-| --------- | -------- | ---------------------------------- | ------------------------ |
-| Alice     | 1        | AVG(salary where dept\_id=1)=52500 | Yes/No                   |
-| Bob       | 2        | AVG(salary where dept\_id=2)=62500 | Yes/No                   |
-| Charlie   | 1        | AVG(salary where dept\_id=1)=52500 | Yes/No                   |
-| …         | …        | …                                  | …                        |
-
-* Notice how **each outer row triggers a separate subquery execution**.
-
----
-
-
-
-## **1. Think “Step-by-Step Filtering or Aggregation”**
-
-A subquery is useful when you want to **compute something first** and then use it in another query.
-
-### **Pattern**
-
-1. Compute a value or set of values.
-2. Use that result to filter, compare, or calculate in the outer query.
-
-**Example:**
-
-> “Get all employees whose salary is above the average.”
-
-* Step 1: Compute `AVG(salary)` → **subquery**
-* Step 2: Filter employees using that value → **outer query**
-
-```sql
-SELECT emp_name, salary
-FROM Employee
-WHERE salary > (SELECT AVG(salary) FROM Employee);
-```
-
----
-
-## **2. When You Need Multi-Row Comparison**
-
-If you need to compare against a **set of values**, a subquery is very natural.
-
-**Example:**
-
-> “Find employees who work in departments located in NY.”
-
-```sql
-SELECT emp_name
-FROM Employee
-WHERE dept_id IN (SELECT dept_id FROM Department WHERE location='NY');
-```
-
-* Inner query produces a **set/list of dept\_id**
-* Outer query checks membership → perfect subquery use case
-
----
-
-## **3. When Outer Row Depends on Inner Calculation (Correlated Subquery)**
-
-If a row’s filtering or derived value depends on **its own group or context**, use a correlated subquery.
-
-**Example:**
-
-> “Find employees whose salary is higher than the **average salary of their department**.”
-
-```sql
-SELECT emp_name, salary
-FROM Employee e
-WHERE salary > (
-    SELECT AVG(salary)
-    FROM Employee
-    WHERE dept_id = e.dept_id
+-- Orders table
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    product VARCHAR(50),
+    amount DECIMAL(10,2)
 );
-```
 
-* Inner query depends on `e.dept_id` → correlated subquery.
+INSERT INTO Orders VALUES
+(101, 1, 'Laptop', 45000.00),
+(102, 2, 'Phone', 15000.00),
+(103, 5, 'Tablet', 22000.00), -- customer_id 5 does NOT exist
+(104, 4, 'Headphones', 3000.00);
+```
 
 ---
 
-## **4. When You Need Derived Columns**
+# 4️⃣ Practice Questions
 
-Subqueries are very useful to **compute a value and display it as a column**:
+### FULL OUTER JOIN
+
+1. Show **all customers and all orders**, including those without matches.
+2. Find customers who have **never placed an order**.
+3. Find orders that belong to **non-existent customers**.
+
+👉 Example Query (FULL OUTER JOIN Simulation):
 
 ```sql
-SELECT emp_name,
-       (SELECT dept_name FROM Department d WHERE d.dept_id = e.dept_id) AS dept_name
-FROM Employee e;
+SELECT c.customer_id, c.customer_name, o.order_id, o.product
+FROM Customers c
+LEFT JOIN Orders o ON c.customer_id = o.customer_id
+UNION
+SELECT c.customer_id, c.customer_name, o.order_id, o.product
+FROM Customers c
+RIGHT JOIN Orders o ON c.customer_id = o.customer_id;
 ```
 
-* Instead of a JOIN, a scalar subquery can sometimes be simpler.
-
 ---
 
-## **5. When Not to Use Subqueries**
+### SELF JOIN
 
-* Large datasets with correlated subqueries → slow performance.
-* Can often be rewritten using **JOIN + GROUP BY**, which is more efficient.
+1. Find customers who live in the **same city**.
 
----
+```sql
+SELECT a.customer_name AS customer1, b.customer_name AS customer2, a.city
+FROM Customers a
+JOIN Customers b
+ON a.city = b.city AND a.customer_id < b.customer_id;
+```
 
-## **Intuition Framework**
-
-1. **“Compute first, use later?”** → think **subquery**.
-2. **“Compare to a set/list?”** → think **multi-row subquery (IN/ANY/ALL)**.
-3. **“Need row-by-row context?”** → think **correlated subquery**.
-4. **“Derive a column?”** → think **scalar subquery**.
-5. **“Can it be a JOIN?”** → always consider JOIN first for performance.
-
----
-
-### **Tip for Developing Intuition**
-
-* Ask: *“Can I solve this in one step, or do I need an intermediate result?”*
-* If intermediate result needed → subquery fits naturally.
+2. Detect **duplicate city entries** in the `Customers` table.
+3. List customer pairs where one customer’s ID is exactly **1 greater** than another.
 
 ---
-
 

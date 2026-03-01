@@ -1,164 +1,237 @@
-# <span style="color:#a7c957" >**Lesson-23 SQL**</span>
-# 1️⃣ FULL OUTER JOIN
+# <span style="color:#a7c957">**Lesson-22 SQL**</span>
 
-### 🔹 **Working**
+# 🔹 1. LEFT JOIN
 
-* Combines the results of **LEFT JOIN** and **RIGHT JOIN**.
-* Returns **all rows** from both tables:
-
-  * Matching rows where join condition is true.
-  * Non-matching rows with `NULL` for missing values.
-
-👉 Think of it as:
-`FULL OUTER JOIN = LEFT JOIN ∪ RIGHT JOIN`
-
----
-
-### 🔹 **Syntax**
+### ✅ Syntax
 
 ```sql
 SELECT columns
 FROM tableA
-FULL OUTER JOIN tableB
+LEFT JOIN tableB
 ON tableA.col = tableB.col;
 ```
 
-⚠️ Note: MySQL does **not** support FULL OUTER JOIN directly.
-We achieve it using `UNION`:
+### ✅ Working
+
+* Returns **all rows from the LEFT table (tableA)**.
+* Matching rows from tableB are included; if no match, `NULL` is returned for tableB’s columns.
+
+---
+
+### Example Schema
+
+**Customers**
+
+| cust\_id | name  |
+| -------- | ----- |
+| 1        | Arjun |
+| 2        | Meera |
+| 3        | Rahul |
+
+**Orders**
+
+| order\_id | cust\_id | amount |
+| --------- | -------- | ------ |
+| 101       | 1        | 5000   |
+| 102       | 1        | 2000   |
+| 103       | 2        | 3000   |
+
+---
+
+### ✅ Dry Run
 
 ```sql
-SELECT a.col, b.col
-FROM tableA a
-LEFT JOIN tableB b ON a.id = b.id
-UNION
-SELECT a.col, b.col
-FROM tableA a
-RIGHT JOIN tableB b ON a.id = b.id;
+SELECT c.name, o.order_id, o.amount
+FROM customers c
+LEFT JOIN orders o
+ON c.cust_id = o.cust_id;
 ```
 
----
+Result:
 
-### 🔹 **Use Cases**
+| name  | order\_id | amount |
+| ----- | --------- | ------ |
+| Arjun | 101       | 5000   |
+| Arjun | 102       | 2000   |
+| Meera | 103       | 3000   |
+| Rahul | NULL      | NULL   |
 
-* Comparing **two datasets** (e.g., customers from two regions).
-* Finding mismatched or missing data across systems.
-* Merging logs/data where both sets must be preserved.
-
----
-
-### 🔹 **Precautions & Limitations**
-
-* **Not supported in MySQL directly** → must simulate with `UNION`.
-* Can return **large result sets** with many NULLs.
-* Harder to interpret if data is sparse.
+👉 Rahul appears with NULLs because he has no orders.
 
 ---
 
-# 2️⃣ SELF JOIN
+### ✅ Use Cases
 
-### 🔹 **Working**
+* Show all customers even if they haven’t placed an order.
+* Audit reports where missing data must be highlighted.
 
-* A table joined with **itself**.
-* You must use **aliases** to differentiate copies.
-* Useful for hierarchical data (e.g., employees and managers).
+### ✅ Precautions
+
+* Watch out for **NULL values** — must handle them (e.g., with `COALESCE`).
+* Can produce **larger result sets** than INNER JOIN.
 
 ---
 
-### 🔹 **Syntax**
+# 🔹 2. RIGHT JOIN
+
+### ✅ Syntax
 
 ```sql
-SELECT a.col, b.col
-FROM table a
-JOIN table b
-ON a.some_col = b.some_col;
+SELECT columns
+FROM tableA
+RIGHT JOIN tableB
+ON tableA.col = tableB.col;
 ```
 
----
+### ✅ Working
 
-### 🔹 **Use Cases**
-
-* Find employees who share the same manager.
-* Find duplicate records in a table.
-* Compare rows within the same table.
+* Opposite of LEFT JOIN.
+* Returns **all rows from RIGHT table (tableB)** and only matching rows from tableA.
 
 ---
 
-### 🔹 **Precautions & Limitations**
-
-* Without proper aliases → ambiguous column errors.
-* Large tables → performance heavy.
-* Must clearly define join condition to avoid **Cartesian products**.
-
----
-
-# 3️⃣ 📘 Practice Schema
+### ✅ Dry Run
 
 ```sql
--- Customers table
-CREATE TABLE Customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(50),
-    city VARCHAR(50)
-);
-
-INSERT INTO Customers VALUES
-(1, 'Alice', 'Delhi'),
-(2, 'Bob', 'Mumbai'),
-(3, 'Charlie', 'Pune'),
-(4, 'David', 'Delhi');
-
--- Orders table
-CREATE TABLE Orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT,
-    product VARCHAR(50),
-    amount DECIMAL(10,2)
-);
-
-INSERT INTO Orders VALUES
-(101, 1, 'Laptop', 45000.00),
-(102, 2, 'Phone', 15000.00),
-(103, 5, 'Tablet', 22000.00), -- customer_id 5 does NOT exist
-(104, 4, 'Headphones', 3000.00);
+SELECT c.name, o.order_id, o.amount
+FROM customers c
+RIGHT JOIN orders o
+ON c.cust_id = o.cust_id;
 ```
+
+Result:
+
+| name  | order\_id | amount |
+| ----- | --------- | ------ |
+| Arjun | 101       | 5000   |
+| Arjun | 102       | 2000   |
+| Meera | 103       | 3000   |
+
+👉 All orders appear. If there’s an order with invalid `cust_id`, customer will be NULL.
 
 ---
 
-# 4️⃣ Practice Questions
+### ✅ Use Cases
 
-### FULL OUTER JOIN
+* Ensure you capture **all sales/orders**, even if customer data is missing.
+* Useful when RIGHT table (e.g., orders) is primary.
 
-1. Show **all customers and all orders**, including those without matches.
-2. Find customers who have **never placed an order**.
-3. Find orders that belong to **non-existent customers**.
+### ✅ Precautions
 
-👉 Example Query (FULL OUTER JOIN Simulation):
+* Harder to read (LEFT JOIN is more intuitive).
+* Many companies avoid RIGHT JOIN and just swap table order + use LEFT JOIN.
+
+---
+
+# 🔹 3. CROSS JOIN
+
+### ✅ Syntax
 
 ```sql
-SELECT c.customer_id, c.customer_name, o.order_id, o.product
-FROM Customers c
-LEFT JOIN Orders o ON c.customer_id = o.customer_id
-UNION
-SELECT c.customer_id, c.customer_name, o.order_id, o.product
-FROM Customers c
-RIGHT JOIN Orders o ON c.customer_id = o.customer_id;
+SELECT columns
+FROM tableA
+CROSS JOIN tableB;
 ```
+
+### ✅ Working
+
+* Produces **Cartesian product** → every row in tableA paired with every row in tableB.
+* No join condition needed.
 
 ---
 
-### SELF JOIN
+### Example
 
-1. Find customers who live in the **same city**.
+**Products**
+
+| prod\_id | product |
+| -------- | ------- |
+| 1        | Laptop  |
+| 2        | Phone   |
+
+**Colors**
+
+| color\_id | color  |
+| --------- | ------ |
+| 1         | Black  |
+| 2         | Silver |
+| 3         | Blue   |
 
 ```sql
-SELECT a.customer_name AS customer1, b.customer_name AS customer2, a.city
-FROM Customers a
-JOIN Customers b
-ON a.city = b.city AND a.customer_id < b.customer_id;
+SELECT p.product, c.color
+FROM products p
+CROSS JOIN colors c;
 ```
 
-2. Detect **duplicate city entries** in the `Customers` table.
-3. List customer pairs where one customer’s ID is exactly **1 greater** than another.
+Result (2 × 3 = 6 rows):
+
+| product | color  |
+| ------- | ------ |
+| Laptop  | Black  |
+| Laptop  | Silver |
+| Laptop  | Blue   |
+| Phone   | Black  |
+| Phone   | Silver |
+| Phone   | Blue   |
 
 ---
+
+### ✅ Use Cases
+
+* Generate **combinations** (e.g., product × color, employee × shift).
+* Useful in simulations/testing.
+
+### ✅ Precautions
+
+* Output grows **multiplicatively** (dangerous for large tables!).
+* Should be used carefully with small datasets.
+
+---
+
+# 🔹 Practice Schema
+
+### Customers
+
+| cust\_id | name  |
+| -------- | ----- |
+| 1        | Arjun |
+| 2        | Meera |
+| 3        | Rahul |
+
+### Orders
+
+| order\_id | cust\_id | amount |                    |
+| --------- | -------- | ------ | ------------------ |
+| 101       | 1        | 5000   |                    |
+| 102       | 1        | 2000   |                    |
+| 103       | 2        | 3000   |                    |
+| 104       | 99       | 2500   | ← invalid customer |
+
+### Products
+
+| prod\_id | product |
+| -------- | ------- |
+| 1        | Laptop  |
+| 2        | Phone   |
+
+### Colors
+
+| color\_id | color  |
+| --------- | ------ |
+| 1         | Black  |
+| 2         | Silver |
+| 3         | Blue   |
+
+---
+
+# 🔹 Practice Questions
+
+1. **LEFT JOIN** → Find all customers and their orders, including customers with no orders.
+2. **RIGHT JOIN** → Show all orders and their customers, including orders with invalid customer IDs.
+3. **CROSS JOIN** → Generate all product-color combinations.
+4. **LEFT JOIN + COALESCE** → Replace NULL order amounts with 0 for customers with no orders.
+5. **RIGHT JOIN** → List all order IDs where customer info is missing (name is NULL).
+
+---
+
 

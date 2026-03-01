@@ -21,7 +21,6 @@ ORDER BY column1 [ASC|DESC], column2 [ASC|DESC];
 - SQL retrieves rows (possibly filtered, grouped, aggregated).
 - `ORDER BY` sorts the final result set before returning it.
 - Can sort by:
-
   - A column
   - A column alias
   - An expression (`salary*12`)
@@ -145,5 +144,272 @@ SELECT * FROM Orders LIMIT 5 OFFSET 10;
 - **ORDER BY** → sorting results (can use alias).
 - **DISTINCT** → removes duplicates.
 - **LIMIT/OFFSET** → control how many rows to fetch/skip.
+
+---
+
+# <span style="color:orange; font-size:28px; font-weight:bold">ORDER BY with Multiple Columns — Internal Working (First Principles + Dry Run)</span>
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">1. The core question (reframed)</span>
+
+When we write:
+
+```sql
+ORDER BY col1, col2, col3
+```
+
+**How does SQL decide the final order?**
+Does it sort multiple times?
+Does it merge?
+Does it compare tuples?
+
+Let’s answer this **from first principles**, not syntax.
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">2. First principle: What does ORDER BY actually do?</span>
+
+At the deepest level:
+
+> **ORDER BY defines a total ordering on rows using a comparison function.**
+
+Each row is treated as a **tuple of sort keys**:
+
+```text
+(col1_value, col2_value, col3_value)
+```
+
+SQL does **lexicographical (dictionary-style) comparison**.
+
+This is the _same idea_ as:
+
+- Sorting words in a dictionary
+- Sorting version numbers like `1.2.10`
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">3. Mental model (very important)</span>
+
+Think of each row as transformed into:
+
+```text
+ROW → (key1, key2, key3, original_row)
+```
+
+SQL sorts **only using the keys**, not the whole row.
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">4. Comparison rule (the heart of ORDER BY)</span>
+
+For two rows A and B:
+
+1. Compare `A.col1` vs `B.col1`
+   - If different → decision made ❌ stop
+
+2. If equal → compare `A.col2` vs `B.col2`
+3. If equal → compare `A.col3` vs `B.col3`
+4. Continue until:
+   - Difference found → decide order
+   - All equal → rows are **tie-equivalent**
+
+⚠️ SQL **never jumps ahead**.
+It is strictly **left-to-right**.
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">5. Dry run example (step-by-step)</span>
+
+### Table: `students`
+
+| name | dept | marks |
+| ---- | ---- | ----- |
+| A    | CS   | 80    |
+| B    | CS   | 70    |
+| C    | EE   | 90    |
+| D    | CS   | 80    |
+| E    | EE   | 85    |
+
+---
+
+### Query:
+
+```sql
+ORDER BY dept ASC, marks DESC, name ASC;
+```
+
+---
+
+### Step 1: Construct sort keys
+
+Each row becomes:
+
+| Row | Sort key tuple |
+| --- | -------------- |
+| A   | (CS, 80, A)    |
+| B   | (CS, 70, B)    |
+| C   | (EE, 90, C)    |
+| D   | (CS, 80, D)    |
+| E   | (EE, 85, E)    |
+
+---
+
+### Step 2: Compare by `dept` (primary key)
+
+Ordering:
+
+```
+CS < EE
+```
+
+So split into buckets:
+
+**Bucket 1 (CS)**:
+
+- A (80)
+- B (70)
+- D (80)
+
+**Bucket 2 (EE)**:
+
+- C (90)
+- E (85)
+
+---
+
+### Step 3: Resolve ties using `marks DESC`
+
+#### CS bucket:
+
+- A → 80
+- D → 80
+- B → 70
+
+Sorted:
+
+```
+80, 80, 70
+```
+
+Still a tie between A and D.
+
+#### EE bucket:
+
+- C → 90
+- E → 85
+
+Sorted:
+
+```
+90, 85
+```
+
+---
+
+### Step 4: Resolve remaining ties using `name ASC`
+
+CS group (80 marks):
+
+- A
+- D
+
+Alphabetical order:
+
+```
+A < D
+```
+
+---
+
+### Step 5: Final output order
+
+| name | dept | marks |
+| ---- | ---- | ----- |
+| A    | CS   | 80    |
+| D    | CS   | 80    |
+| B    | CS   | 70    |
+| C    | EE   | 90    |
+| E    | EE   | 85    |
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">6. Important internal insight (how DB engines really do it)</span>
+
+SQL **does NOT** run multiple sorts like:
+
+❌ Sort by name
+❌ Then sort by marks
+❌ Then sort by dept
+
+Instead, it builds a **single composite comparator**:
+
+```text
+compare(r1, r2):
+  if r1.dept != r2.dept:
+      return r1.dept < r2.dept
+  else if r1.marks != r2.marks:
+      return r1.marks > r2.marks
+  else:
+      return r1.name < r2.name
+```
+
+One comparator → one sort operation.
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">7. Is ORDER BY stable?</span>
+
+### Key fact:
+
+SQL **does NOT guarantee stable sorting**.
+
+If all ORDER BY columns are equal:
+
+- Final order is **undefined**
+- Depends on execution plan, indexes, disk layout
+
+✔️ If you care about stability → **add a tie-breaker column**
+
+```sql
+ORDER BY col1, col2, primary_key;
+```
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">8. Common mistakes & misconceptions</span>
+
+### ❌ Mistake 1: Thinking later columns have equal priority
+
+They don’t. Priority strictly decreases left → right.
+
+---
+
+### ❌ Mistake 2: Assuming GROUP BY ordering
+
+```sql
+GROUP BY col1
+```
+
+❌ No ordering guaranteed.
+
+---
+
+### ❌ Mistake 3: Expecting NULLs to behave intuitively
+
+- Some DBs: NULLs first
+- Others: NULLs last
+
+✔️ Use:
+
+```sql
+ORDER BY col NULLS LAST;
+```
+
+---
+
+## <span style="color:red; font-size:22px; font-weight:bold">9. One-line intuition (lock this in)</span>
+
+> **ORDER BY sorts rows by comparing tuples left-to-right until a difference is found.**
 
 ---
